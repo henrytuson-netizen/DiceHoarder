@@ -7,6 +7,7 @@ var furniture: Node
 var player: CharacterBody3D
 var slots: Array[Node3D] = []
 var dice: Array[RigidBody3D] = []
+var _pending := []   # dice still to spawn: [set, kind, transform]
 var _rng_state := 21
 var mat_wall := StandardMaterial3D.new()
 var mat_trim := StandardMaterial3D.new()
@@ -17,7 +18,10 @@ func rng() -> float:
 	_rng_state = (_rng_state * 16807) % 2147483647
 	return float(_rng_state) / 2147483647.0
 
+var _ready_ms := 0
+
 func _ready() -> void:
+	var t0 := Time.get_ticks_msec()
 	kit = DiceKit.new()
 	sets = DiceSets.build()
 	furniture = load("res://assets/models/shop-furniture.glb").instantiate()
@@ -31,6 +35,8 @@ func _ready() -> void:
 	add_child(player)
 	player.global_position = Cfg.START
 	player.look_at_point(Cfg.START_LOOK)
+	_ready_ms = Time.get_ticks_msec() - t0
+	print("READY_MS ", _ready_ms)
 	_test_hooks()
 
 # ---------------------------------------------------------------- look
@@ -135,10 +141,33 @@ func _piece(name: String) -> Node3D:
 	c.transform = Transform3D.IDENTITY
 	return c
 
+var _shapes := {}
+
+## One merged collision shape per furniture type, shared by every copy (fast to build and to load).
+func _piece_shape(name: String) -> ConcavePolygonShape3D:
+	if _shapes.has(name): return _shapes[name]
+	var src := furniture.find_child(name, true, false) as Node3D
+	var faces := PackedVector3Array()
+	for mi in src.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		var xf := src.global_transform.affine_inverse() * m.global_transform if src.is_inside_tree() else _rel(src, m)
+		for v in m.mesh.get_faces(): faces.append(xf * v)
+	var sh := ConcavePolygonShape3D.new(); sh.set_faces(faces)
+	_shapes[name] = sh
+	return sh
+
+func _rel(root: Node3D, n: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var cur: Node = n
+	while cur != root and cur is Node3D:
+		xf = (cur as Node3D).transform * xf
+		cur = cur.get_parent()
+	return xf
+
 func _add_furniture(name: String, pos: Vector3, ry := 0.0) -> Node3D:
 	var p := _piece(name); add_child(p); p.global_position = pos; p.rotation.y = ry
-	for mi in p.find_children("*", "MeshInstance3D", true, false):
-		(mi as MeshInstance3D).create_trimesh_collision()
+	var sb := StaticBody3D.new(); var cs := CollisionShape3D.new(); cs.shape = _piece_shape(name)
+	sb.add_child(cs); p.add_child(sb)
 	return p
 
 func _furniture() -> void:
@@ -192,7 +221,14 @@ func _dice() -> void:
 			var key := Vector2i(floori(x / cell), floori(z / cell))
 			if not grid.has(key): grid[key] = []
 			grid[key].append(Vector2(x, z))
-			dice.append(_make_die(s, kind, kit.resting(kind, Vector3(x, 0, z), rng() * TAU, int(rng() * 20))))
+			_pending.append([s, kind, kit.resting(kind, Vector3(x, 0, z), rng() * TAU, int(rng() * 20))])
+
+## Spawn dice a few hundred per frame so the shop appears immediately.
+func _process(_dt: float) -> void:
+	var n := 0
+	while _pending.size() > 0 and n < 300:
+		var d = _pending.pop_back()
+		dice.append(_make_die(d[0], d[1], d[2])); n += 1
 
 func _clear(grid: Dictionary, x: float, z: float, cell: float) -> bool:
 	var cx := floori(x / cell); var cz := floori(z / cell)
@@ -235,5 +271,5 @@ func _test_hooks() -> void:
 		if a.begins_with("--frames="): frames = int(a.substr(9))
 	for i in frames: await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(shot)
-	print("SHOT ", shot, " slots=", slots.size(), " dice=", dice.size(), " fps=", Engine.get_frames_per_second())
+	print("SHOT ", shot, " slots=", slots.size(), " dice=", dice.size(), " pending=", _pending.size(), " ready_ms=", _ready_ms, " fps=", Engine.get_frames_per_second())
 	get_tree().quit()
