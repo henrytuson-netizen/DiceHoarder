@@ -3,11 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="0; url=./shop/" />
   <title>Dice Hoarder</title>
-  <style>body{margin:0;background:#1c120b;color:#f6ecd9;font:18px Segoe UI,Arial;display:grid;place-items:center;height:100vh}a{color:#ffc77a}</style>
 </head>
 <body>
-  <p>Loading the shop… <a href="./shop/">Open the walkable shop</a> · <a href="./prototype/roll-and-score.html">Old roll-and-score prototype</a></p>
+  <div id="app"></div>
+  <div id="loading">Opening the shop…</div>
+  <div id="hud">
+    <div>Held Die: <span id="hud-die" class="held">-</span></div>
+    <div>Material: <b id="hud-material">-</b></div>
+    <div>Color: <b id="hud-color">-</b></div>
+    <hr />
+    <div>Set Dice: <span id="hud-set"></span></div>
+    <div>Set: <b id="hud-setcount">-</b></div>
+    <div>Hand: <b id="hud-hand">0 / 7</b></div>
+    <div>Sets sorted: <b id="hud-progress">0 / 402</b></div>
+  </div>
+  <div id="crosshair"></div>
+  <div id="prompt"></div>
+  <div id="toast"></div>
+  <div id="pc"></div>
+  <div id="hint">Click to look · WASD walk · Shift run · E / click pick up, sort, use computer · F / right-click throw · Q / wheel switch die · R reset</div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

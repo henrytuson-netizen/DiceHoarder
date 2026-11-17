@@ -7,9 +7,9 @@ This is an **original prototype inspired by a cozy sorting game**; it uses none 
 ## Where things are
 | Path | What |
 |---|---|
-| `index.html` | The original roll-and-score prototype (live at the site root, unchanged) |
-| `shop/index.html` | **Walkable 3D shop** (three.js, one file, model embedded). WASD move, mouse look, Shift run, R reset |
-| `assets/shop-furniture.glb` | Shelf, counter and desk models with one baked ebony wood atlas |
+| `index.html`, `src/` | **The game** (Vite + TypeScript + three.js + Rapier physics) |
+| `public/models/shop-furniture.glb` | Islands, wall racks, counter and desk, with 402 slot markers |
+| `dist/` | Built site that Cloudflare serves (rebuild with `npm run build`) |
 | `blender/` | Scripts that build and bake the models (see `blender/README.md`) |
 | `docs/` | Concept renders |
 | `prototype/` | Copy of the original prototype |
@@ -21,4 +21,10 @@ This is an **original prototype inspired by a cozy sorting game**; it uses none 
 - Not done: sound, carved rack art, dice as separate models
 
 ## Run it
-Open `shop/index.html` in Chrome, Edge or Firefox (needs internet for three.js from a CDN).
+```bash
+npm install
+npm run dev
+```
+Controls: click to look, WASD walk, Shift run, E / click pick up · sort · use computer, F / right-click throw, Q / wheel switch die, R reset.
+
+`npm run build` writes `dist/`. Commit `dist/` until Cloudflare's build command is set to `npm run build`.
