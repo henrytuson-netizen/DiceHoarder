@@ -19,8 +19,11 @@
 - HUD: Held Die, Material, Color, Set Dice icons, Set Current Value (Gold ?).
 - Story mode (daily required value ?) and Chill mode. Basement unlocks when all slots are done.
 
+## Target look (for later)
+Warm, saturated cozy shop: teal-grey plaster walls, wooden posts and beams, tall bright windows with green curtains, ivy and hanging plants, lamps and candles, low rounded display tables with arched slot grids in clusters, heaps and drifts of dice. Open questions: warm honey wood vs. the dark `#3F2000` ebony; rounded tables vs. the tall stepped islands (would change the 402-slot layout). Make it in this style with our own models, never copies.
+
 ## Workflow
 - The single-file HTML pages are prototypes. The real game moves to a proper project (bundler, three.js dependency).
 - The game is live at the site root. Cloudflare deploys `dist/` via `wrangler.jsonc`. Until Cloudflare's build command is set to `npm run build`, run `npm run build` and commit `dist/` with every change that should go live.
-- Work on a branch; merge to `main` only when the user says to go live.
+- Work on a branch, then **always go live**: once a change is built and tested, merge it to `main` and push (the user's standing instruction).
 - Supabase only if saves/accounts are needed.
