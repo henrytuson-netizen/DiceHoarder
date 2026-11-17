@@ -22,6 +22,9 @@
 ## Target look (for later)
 Warm, saturated cozy shop: teal-grey plaster walls, wooden posts and beams, tall bright windows with green curtains, ivy and hanging plants, lamps and candles, low rounded display tables with arched slot grids in clusters, heaps and drifts of dice. Decided: warm honey wood and rounded arched tables. Match this look as closely as possible with our own models and art (never their assets).
 
+## Next update (to-do)
+- Remove the potted plants (the Poly Haven houseplants and the succulents on the counter/desk): the user says they don't match the style. Keep the ivy, trailing vines and hanging planters. Also drop their `POTS` blockers in `src/config.ts` and `public/models/plants.glb`.
+
 ## Platform
 - **The web version (Vite + three.js) is the main game.** A Godot 4.7 port exists in `godot/` (walkable shop, baked furniture, physics dice, standalone Linux export on the `builds` branch) but is **paused**: it was too laggy on the user's Chromebook (Intel i5-1235U, ChromeOS Linux). Revisit when there is a stronger test machine.
 
