@@ -22,6 +22,9 @@
 ## Target look (for later)
 Warm, saturated cozy shop: teal-grey plaster walls, wooden posts and beams, tall bright windows with green curtains, ivy and hanging plants, lamps and candles, low rounded display tables with arched slot grids in clusters, heaps and drifts of dice. Decided: warm honey wood and rounded arched tables. Match this look as closely as possible with our own models and art (never their assets).
 
+## Platform
+- **The web version (Vite + three.js) is the main game.** A Godot 4.7 port exists in `godot/` (walkable shop, baked furniture, physics dice, standalone Linux export on the `builds` branch) but is **paused**: it was too laggy on the user's Chromebook (Intel i5-1235U, ChromeOS Linux). Revisit when there is a stronger test machine.
+
 ## Workflow
 - The single-file HTML pages are prototypes. The real game moves to a proper project (bundler, three.js dependency).
 - The game is live at the site root. Cloudflare deploys `dist/` via `wrangler.jsonc`. Until Cloudflare's build command is set to `npm run build`, run `npm run build` and commit `dist/` with every change that should go live.
