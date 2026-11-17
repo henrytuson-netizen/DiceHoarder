@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TABLES, TABLE_PAIRS, WALL_RACKS, WALL_H, DOOR, DIVIDER_Z, COUNTER, DESK, CARPET, BASEMENT, DIE_RADIUS } from './config';
 import { Furniture, collectSlots, type Slot } from './furniture';
-import { floorTexture, woodTexture, wallTexture, carpetTexture, basementTexture } from './textures';
+import { floorTexture, woodTexture, carpetTexture, basementTexture } from './textures';
 import { SET_KINDS } from './dice';
 import { restingMatrix, type Die } from './diceField';
 import type { DiceSet, MaterialKind } from './sets';
@@ -24,7 +24,23 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
     b.position.set(x, y, z); b.castShadow = b.receiveShadow = true; parent.add(b); return b;
   }
   const floorMat = (w: number, d: number) => mat({ map: floorTexture(rng, w, d), roughness: 0.5 });
-  const wallMat = (w: number, h: number) => mat({ map: wallTexture(rng, w, h), roughness: 0.85 });
+  // Plaster walls: Blue Plaster Wall (Poly Haven, CC0) - colour, bump and roughness/AO.
+  const plasterLoader = new THREE.TextureLoader();
+  const plaster = (file: string, srgb: boolean) => {
+    const t = plasterLoader.load(`${import.meta.env.BASE_URL}textures/${file}`);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const plasterColour = plaster('plaster_colour.jpg', true);
+  const plasterNormal = plaster('plaster_normal.jpg', false);
+  const plasterARM = plaster('plaster_arm.jpg', false);
+  // Tiles about every 2 m, so walls don't look stretched.
+  const wallMat = (w: number, h: number) => {
+    const m = mat({ map: plasterColour.clone(), normalMap: plasterNormal.clone(), roughnessMap: plasterARM.clone(), roughness: 1, aoMap: plasterARM.clone(), normalScale: new THREE.Vector2(0.6, 0.6) });
+    for (const t of [m.map, m.normalMap, m.roughnessMap, m.aoMap] as THREE.Texture[]) if (t) t.repeat.set(w / 2, h / 2);
+    return m;
+  };
 
   // ---- floors
   box(17, 0.1, 8.2, floorMat(17, 8.2), 8.5, -0.05, 4.1);
