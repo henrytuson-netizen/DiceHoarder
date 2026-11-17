@@ -57,12 +57,25 @@ func _environment() -> void:
 	sky.sky_material = sm; e.sky = sky; e.background_mode = Environment.BG_SKY
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_SKY; e.ambient_light_energy = 0.25
 	e.tonemap_mode = Environment.TONE_MAPPER_AGX; e.tonemap_exposure = 1.0
-	e.sdfgi_enabled = true; e.sdfgi_use_occlusion = true; e.sdfgi_energy = 0.75
-	e.ssao_enabled = true; e.ssao_radius = 0.6
+	var low := _low_end()
+	print("GRAPHICS ", RenderingServer.get_video_adapter_name(), " -> ", "low settings" if low else "high settings")
+	e.sdfgi_enabled = not low; e.sdfgi_use_occlusion = true; e.sdfgi_energy = 0.75
+	e.ssao_enabled = not low; e.ssao_radius = 0.6
+	if low: e.ambient_light_energy = 0.45
 	e.glow_enabled = true; e.glow_intensity = 0.4; e.glow_bloom = 0.05
 	e.volumetric_fog_enabled = true; e.volumetric_fog_density = 0.025; e.volumetric_fog_albedo = Color("#fff4e6"); e.volumetric_fog_anisotropy = 0.7; e.volumetric_fog_gi_inject = 0.3
 	e.adjustment_enabled = true; e.adjustment_saturation = 0.95
 	we.environment = e; add_child(we)
+
+## Laptop / integrated graphics get the cheaper look (no bounced light, no AO). Override with --high or --low.
+func _low_end() -> bool:
+	var args := OS.get_cmdline_user_args() + OS.get_cmdline_args()
+	if "--high" in args: return false
+	if "--low" in args: return true
+	var gpu := RenderingServer.get_video_adapter_name().to_lower() + " " + RenderingServer.get_video_adapter_vendor().to_lower()
+	for k in ["intel", "llvmpipe", "virgl", "venus", "mali", "adreno", "swiftshader", "lavapipe"]:
+		if gpu.contains(k): return true
+	return false
 
 func _box(size: Vector3, pos: Vector3, mat: Material, collide := true, parent: Node = self) -> MeshInstance3D:
 	var mi := MeshInstance3D.new(); var bm := BoxMesh.new(); bm.size = size; mi.mesh = bm
