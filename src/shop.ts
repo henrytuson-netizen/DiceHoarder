@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { TABLES, TABLE_PAIRS, WALL_RACKS, WALL_H, DOOR, DIVIDER_Z, COUNTER, DESK, CARPET, BASEMENT, DIE_RADIUS } from './config';
 import { Furniture, collectSlots, type Slot } from './furniture';
-import { floorTexture, woodTexture, carpetTexture, basementTexture } from './textures';
+import { carpetTexture, basementTexture } from './textures';
 import { SET_KINDS } from './dice';
 import { restingMatrix, type Die } from './diceField';
 import type { DiceSet, MaterialKind } from './sets';
@@ -15,15 +15,29 @@ const ISLAND_MATERIAL: MaterialKind[] = ['plastic', 'solidResin', 'clearResin', 
 
 export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSet[], rng: Rng, opts: ShopOptions): Shop {
   const mat = (o: THREE.MeshStandardMaterialParameters) => new THREE.MeshStandardMaterial(o);
-  const woodTex = woodTexture(rng);
-  const trim = mat({ map: woodTex, color: '#c98a4e', roughness: 0.6 });
-  const trimDark = mat({ map: woodTex, color: '#9a6434', roughness: 0.65 });
+  // Honey wood cut from the furniture bake (same wood as the tables), tiled.
+  const woodLoader = new THREE.TextureLoader();
+  const woodMap = (file: string, srgb: boolean) => {
+    const t = woodLoader.load(`${import.meta.env.BASE_URL}textures/${file}`);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  const woodColour = woodMap('wood_colour.jpg', true), woodNormal = woodMap('wood_normal.jpg', false), woodRough = woodMap('wood_rough.jpg', false);
+  // tile is 1.6 m; `repeat` = how many tiles across the piece
+  const woodMat = (color: string, rough: number, w: number, h: number, scale = 1) => {
+    const m = mat({ map: woodColour.clone(), normalMap: woodNormal.clone(), roughnessMap: woodRough.clone(), color, roughness: rough, normalScale: new THREE.Vector2(0.5, 0.5) });
+    for (const t of [m.map, m.normalMap, m.roughnessMap] as THREE.Texture[]) t?.repeat.set((w / 1.6) * scale, (h / 1.6) * scale);
+    return m;
+  };
+  const trim = woodMat('#ffffff', 0.6, 1, 1, 1);
+  const trimDark = woodMat('#d9b08a', 0.65, 1, 1, 1);
 
   function box(w: number, h: number, d: number, m: THREE.Material | THREE.Material[], x: number, y: number, z: number, parent: THREE.Object3D = scene): THREE.Mesh {
     const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
     b.position.set(x, y, z); b.castShadow = b.receiveShadow = true; parent.add(b); return b;
   }
-  const floorMat = (w: number, d: number) => mat({ map: floorTexture(rng, w, d), roughness: 0.5 });
+  const floorMat = (w: number, d: number) => woodMat('#ffffff', 0.5, w, d);
   // Plaster walls: Blue Plaster Wall (Poly Haven, CC0) - colour, bump and roughness/AO.
   const plasterLoader = new THREE.TextureLoader();
   const plaster = (file: string, srgb: boolean) => {
