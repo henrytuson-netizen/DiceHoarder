@@ -3,13 +3,13 @@ import { SHELVES, WALL_RACKS, WALL_H, DOOR, DIVIDER_Z, COUNTER, DESK, CARPET, BA
 import { Furniture, collectSlots, type Slot } from './furniture';
 import { floorTexture, woodTexture, wallTexture, plaqueTexture, carpetTexture, basementTexture } from './textures';
 import { SET_KINDS } from './dice';
-import { restingMatrix, type DieRecord } from './diceField';
+import { restingMatrix, type Die } from './diceField';
 import type { DiceSet, MaterialKind } from './sets';
 import { walkable } from './collision';
 import type { Rng } from './rng';
 
 export interface ShopOptions { cutaway: boolean; presorted: number }
-export interface Shop { slots: Slot[]; slotOfSet: number[]; dice: DieRecord[]; sortedSets: number }
+export interface Shop { slots: Slot[]; slotOfSet: number[]; dice: Die[]; presorted: Set<number>; computer: THREE.Object3D }
 
 const ISLAND_MATERIAL: MaterialKind[] = ['plastic', 'solidResin', 'clearResin', 'metal', 'gemstone'];
 
@@ -57,7 +57,7 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
   const glowMat = new THREE.MeshBasicMaterial({ color: '#fff1cc', fog: false, toneMapped: false });
   const win = (x: number, z: number, ry: number) => {
     const g = new THREE.Group();
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.6), glowMat); glow.position.z = 0.01; g.add(glow);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.6), glowMat); glow.position.z = 0.01; glow.userData.noCollide = true; g.add(glow);
     ([[1.4, 0.08, 0, 0.8], [1.4, 0.08, 0, -0.8], [0.08, 1.68, 0.7, 0], [0.08, 1.68, -0.7, 0], [0.05, 1.6, 0, 0], [1.3, 0.05, 0, 0]] as const)
       .forEach(([w, h, px, py]) => box(w, h, 0.1, trim, px, py, 0.05, g));
     g.position.set(x, 1.9, z); g.rotation.y = ry; scene.add(g);
@@ -96,7 +96,7 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
   box(0.5, 0.3, 0.4, mat({ color: '#2c2c30', roughness: 0.4 }), 16.0, 1.26, 5.7);
   { const d = furniture.clone('Desk'); d.position.set(DESK.x, 0, DESK.z); scene.add(d); }
   {
-    const mon = new THREE.Group(); mon.position.set(DESK.x + 0.9, 0.96, DESK.z); scene.add(mon);
+    const mon = new THREE.Group(); mon.name = 'computer'; mon.position.set(DESK.x + 0.9, 0.96, DESK.z); scene.add(mon);
     box(0.6, 0.4, 0.04, mat({ color: '#1c1c20' }), 0, 0.38, 0, mon);
     box(0.54, 0.34, 0.01, new THREE.MeshBasicMaterial({ color: '#7fd0e8' }), 0, 0.38, 0.025, mon);
     box(0.08, 0.2, 0.08, mat({ color: '#1c1c20' }), 0, 0.1, 0, mon);
@@ -109,10 +109,11 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
     const px = DESK.x - 1.2, pz = DESK.z;
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.3, 20), mat({ color: '#b86b3a', roughness: 0.7 }));
     pot.position.set(px, 1.11, pz); pot.castShadow = true; scene.add(pot);
+    const leaves = new THREE.Group(); leaves.userData.noCollide = true; scene.add(leaves);
     for (let i = 0; i < 16; i++) {
       const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), mat({ color: rng() > 0.5 ? '#3f9a52' : '#2f7a3f', roughness: 0.7 }));
       l.scale.set(1, 1.8, 0.4); l.position.set(px + (rng() - 0.5) * 0.35, 1.5 + rng() * 0.35, pz + (rng() - 0.5) * 0.35);
-      l.rotation.set(rng() * 0.8, rng() * 6, rng() * 0.8); scene.add(l);
+      l.rotation.set(rng() * 0.8, rng() * 6, rng() * 0.8); leaves.add(l);
     }
   }
 
@@ -122,8 +123,8 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
     const l = new THREE.PointLight('#ffb560', intensity, 9, 1.6); l.position.set(x, 2.55, z); scene.add(l);
     if (opts.cutaway) return;
     const shade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.3, 24, 1, true), mat({ color: '#f0b45a', side: THREE.DoubleSide, emissive: '#c07a20', emissiveIntensity: 0.8 }));
-    shade.position.set(x, 2.7, z); scene.add(shade);
-    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5), mat({ color: '#111' })); cord.position.set(x, 3.0, z); scene.add(cord);
+    shade.position.set(x, 2.7, z); shade.userData.noCollide = true; scene.add(shade);
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5), mat({ color: '#111' })); cord.position.set(x, 3.0, z); cord.userData.noCollide = true; scene.add(cord);
   };
   SHELVES.forEach((s) => pendant(s.x, s.z, opts.cutaway ? 18 : 14));
   pendant(14.4, 10.8, 16); pendant(8.4, 10.8, 14); pendant(COUNTER.x, 5.0, 10);
@@ -145,37 +146,35 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
   sets.filter((s) => s.material === 'special').forEach((s) => { slotOfSet[s.id] = wallFree.shift() ?? -1; });
   if (slotOfSet.some((v) => v < 0)) throw new Error('Not every set has a slot');
 
-  // ---- dice: a few sets pre-sorted (demo), the rest loose in piles and scattered on the floor
-  const dice: DieRecord[] = [];
+  // ---- dice: every die gets a resting spot on the floor (single layer, no overlaps, some dense patches)
   const presorted = new Set<number>();
   while (presorted.size < Math.min(opts.presorted, sets.length)) presorted.add(Math.floor(rng() * sets.length));
-  for (const id of presorted) {
-    const slot = slots[slotOfSet[id]];
-    const pts: [number, number][] = [];
-    let tries = 0;
-    while (pts.length < 7 && tries++ < 2000) {
-      const px = (rng() - 0.5) * (slot.width - 0.08), pz = (rng() - 0.5) * (slot.depth - 0.07);
-      if (pts.every(([a, b]) => Math.hypot(a - px, b - pz) > 0.062)) pts.push([px, pz]);
-    }
-    while (pts.length < 7) pts.push([(rng() - 0.5) * (slot.width - 0.08), (rng() - 0.5) * (slot.depth - 0.07)]);
-    SET_KINDS.forEach((kind, i) => dice.push({ setId: id, kind, matrix: restingMatrix(kind, DIE_RADIUS, pts[i][0], 0, pts[i][1], rng() * 6.28, Math.floor(rng() * 20), slot.matrix) }));
-  }
   const piles: [number, number, number][] = [];
-  while (piles.length < 14) { const x = 0.8 + rng() * 15.4, z = 0.8 + rng() * 11.6; if (walkable(x, z, 0.8)) piles.push([x, z, 0.5 + rng() * 0.6]); }
+  while (piles.length < 14) { const x = 0.8 + rng() * 15.4, z = 0.8 + rng() * 11.6; if (walkable(x, z, 0.8)) piles.push([x, z, 0.6 + rng() * 0.6]); }
+  const CELL = 0.08, MIN = 0.072, grid = new Map<string, [number, number][]>();
+  const key = (x: number, z: number) => `${Math.floor(x / CELL)},${Math.floor(z / CELL)}`;
+  const clear = (x: number, z: number) => {
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL);
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const [a, b] of grid.get(`${cx + i},${cz + j}`) ?? []) if (Math.hypot(a - x, b - z) < MIN) return false;
+    return true;
+  };
+  const dice: Die[] = [];
   for (const s of sets) {
-    if (presorted.has(s.id)) continue;
-    for (const kind of SET_KINDS) {
-      let x = 0, z = 0, y = 0;
-      for (let t = 0; t < 50; t++) {
+    SET_KINDS.forEach((kind, kindIndex) => {
+      let x = 0, z = 0;
+      for (let t = 0; t < 80; t++) {
         if (rng() < 0.6) {
           const [px, pz, pr] = piles[Math.floor(rng() * piles.length)];
           const a = rng() * 6.283, d = Math.sqrt(rng()) * pr;
-          x = px + Math.cos(a) * d; z = pz + Math.sin(a) * d; y = Math.max(0, 0.12 * (1 - d / pr)) * rng();
-        } else { x = 0.5 + rng() * 16; z = 0.5 + rng() * 12.3; y = 0; }
-        if (walkable(x, z, 0.05)) break;
+          x = px + Math.cos(a) * d; z = pz + Math.sin(a) * d;
+        } else { x = 0.5 + rng() * 16; z = 0.5 + rng() * 12.3; }
+        if (walkable(x, z, 0.05) && clear(x, z)) break;
       }
-      dice.push({ setId: s.id, kind, matrix: restingMatrix(kind, DIE_RADIUS, x, y, z, rng() * 6.28, Math.floor(rng() * 20)) });
-    }
+      const k = key(x, z); const cellList = grid.get(k) ?? []; cellList.push([x, z]); grid.set(k, cellList);
+      dice.push({ id: dice.length, setId: s.id, kind, kindIndex, where: 'floor', floor: restingMatrix(kind, DIE_RADIUS, x, 0, z, rng() * 6.28, Math.floor(rng() * 20)) });
+    });
   }
-  return { slots, slotOfSet, dice, sortedSets: presorted.size };
+  const computer = scene.getObjectByName('computer');
+  if (!computer) throw new Error('computer missing');
+  return { slots, slotOfSet, dice, presorted, computer };
 }

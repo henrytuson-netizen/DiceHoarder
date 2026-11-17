@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { getShape, DIE_SIZE, type DieKind } from './dice';
 import type { DiceSet, MaterialKind } from './sets';
 
-export interface DieRecord { setId: number; kind: DieKind; matrix: THREE.Matrix4 }
+export type DieWhere = 'floor' | 'hand' | 'slot';
+export interface Die { id: number; setId: number; kind: DieKind; kindIndex: number; floor: THREE.Matrix4; where: DieWhere }
 
 const Y_DOWN = new THREE.Vector3(0, -1, 0);
 const Y_UP = new THREE.Vector3(0, 1, 0);
+const HIDDEN = new THREE.Matrix4().compose(new THREE.Vector3(0, -50, 0), new THREE.Quaternion(), new THREE.Vector3(1e-4, 1e-4, 1e-4));
 
 /** Matrix for a die resting flat on one of its faces at (x, y, z), turned by `yaw`. Optional parent transform. */
 export function restingMatrix(kind: DieKind, radius: number, x: number, y: number, z: number, yaw: number, face: number, parent?: THREE.Matrix4): THREE.Matrix4 {
@@ -17,8 +19,8 @@ export function restingMatrix(kind: DieKind, radius: number, x: number, y: numbe
   return parent ? m.premultiply(parent) : m;
 }
 
-function materialFor(kind: MaterialKind): THREE.MeshPhysicalMaterial {
-  const base = { color: 0xffffff, flatShading: true };
+export function diceMaterial(kind: MaterialKind, colour = 0xffffff): THREE.MeshPhysicalMaterial {
+  const base = { color: colour, flatShading: true };
   switch (kind) {
     case 'plastic': return new THREE.MeshPhysicalMaterial({ ...base, roughness: 0.5 });
     case 'solidResin': return new THREE.MeshPhysicalMaterial({ ...base, roughness: 0.28, clearcoat: 0.6, clearcoatRoughness: 0.2 });
@@ -31,17 +33,21 @@ function materialFor(kind: MaterialKind): THREE.MeshPhysicalMaterial {
 
 /**
  * All dice drawn as one InstancedMesh per (material, die kind): 6 x 7 = 42 draw calls for 2,814 dice.
- * Numerals are not drawn on instanced dice yet (planned: only on dice near the player).
+ * Each die keeps a fixed instance slot; moving a die just rewrites its matrix.
  */
 export class DiceField {
   readonly group = new THREE.Group();
+  readonly meshes: THREE.InstancedMesh[] = [];
+  private readonly loc: { mesh: THREE.InstancedMesh; index: number }[] = [];
+  private readonly owners = new Map<THREE.InstancedMesh, number[]>();
+  private readonly dirty = new Set<THREE.InstancedMesh>();
 
-  constructor(records: DieRecord[], sets: DiceSet[]) {
-    const buckets = new Map<string, DieRecord[]>();
-    for (const r of records) {
-      const key = `${sets[r.setId].material}|${r.kind}`;
+  constructor(dice: Die[], sets: DiceSet[], initial: (d: Die) => THREE.Matrix4) {
+    const buckets = new Map<string, Die[]>();
+    for (const d of dice) {
+      const key = `${sets[d.setId].material}|${d.kind}`;
       const list = buckets.get(key) ?? [];
-      list.push(r); buckets.set(key, list);
+      list.push(d); buckets.set(key, list);
     }
     const materials = new Map<MaterialKind, THREE.MeshPhysicalMaterial>();
     const colour = new THREE.Color();
@@ -49,14 +55,40 @@ export class DiceField {
       const [material, kindStr] = key.split('|') as [MaterialKind, string];
       const kind = Number(kindStr) as DieKind;
       let mat = materials.get(material);
-      if (!mat) { mat = materialFor(material); materials.set(material, mat); }
+      if (!mat) { mat = diceMaterial(material); materials.set(material, mat); }
       const mesh = new THREE.InstancedMesh(getShape(kind).geometry, mat, list.length);
-      list.forEach((r, i) => { mesh.setMatrixAt(i, r.matrix); mesh.setColorAt(i, colour.set(sets[r.setId].base.hex)); });
-      mesh.instanceMatrix.needsUpdate = true;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      const owners: number[] = [];
+      list.forEach((d, i) => {
+        mesh.setMatrixAt(i, initial(d));
+        mesh.setColorAt(i, colour.set(sets[d.setId].base.hex));
+        this.loc[d.id] = { mesh, index: i }; owners[i] = d.id;
+      });
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
       mesh.castShadow = true; mesh.receiveShadow = true;
       mesh.name = `dice:${key}`;
-      this.group.add(mesh);
+      mesh.computeBoundingSphere();
+      this.owners.set(mesh, owners);
+      this.meshes.push(mesh); this.group.add(mesh);
     }
+  }
+
+  setMatrix(id: number, m: THREE.Matrix4): void {
+    const { mesh, index } = this.loc[id];
+    mesh.setMatrixAt(index, m); this.dirty.add(mesh);
+  }
+  getMatrix(id: number, out = new THREE.Matrix4()): THREE.Matrix4 {
+    const { mesh, index } = this.loc[id];
+    mesh.getMatrixAt(index, out); return out;
+  }
+  hide(id: number): void { this.setMatrix(id, HIDDEN); }
+  dieAt(mesh: THREE.Object3D, instanceId: number | undefined): number | undefined {
+    const owners = this.owners.get(mesh as THREE.InstancedMesh);
+    return owners && instanceId !== undefined ? owners[instanceId] : undefined;
+  }
+  /** Push changed matrices to the GPU and refresh picking bounds. */
+  flush(): void {
+    for (const m of this.dirty) { m.instanceMatrix.needsUpdate = true; m.computeBoundingSphere(); }
+    this.dirty.clear();
   }
 }
