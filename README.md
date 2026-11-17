@@ -1,9 +1,24 @@
-# Hoard Hall
+# Dice Hoarder (working title: Hoard Hall)
 
-A single-file dice-sorting prototype. Open `index.html` in a browser.
+A cozy first-person dice-sorting game: gather loose dice, sort them into 7-piece sets by material and colour, and stock the shop's shelves. No timers.
 
-Roll each of 24 dice once, build sets of up to 5, and score them. Sets worth 20+ are hoards and count toward your total.
+This is an **original prototype inspired by a cozy sorting game**; it uses none of that game's art, name or assets.
 
-Bonuses (sets of 2+ dice unless noted): all different sizes +5, all same size +10, natural 20 on a d20 +15 (any size set), d4 rolling 1 -5 (any size set).
+## Where things are
+| Path | What |
+|---|---|
+| `index.html` | The original roll-and-score prototype (live at the site root, unchanged) |
+| `shop/index.html` | **Walkable 3D shop** (three.js, one file, model embedded). WASD move, mouse look, Shift run, R reset |
+| `assets/shop-furniture.glb` | Shelf, counter and desk models with one baked ebony wood atlas |
+| `blender/` | Scripts that build and bake the models (see `blender/README.md`) |
+| `docs/` | Concept renders |
+| `prototype/` | Copy of the original prototype |
 
-Keys: 1-5 add the selected die to the tray, Space roll, Enter score, Backspace empty tray, arrows change selection.
+## Status
+- Layout and proportions: locked (see `CLAUDE.md`)
+- Walkable shop with baked models: done
+- **Next:** pick up / place dice loop, held-die HUD, slot matching, gold value, floppy-disk skills
+- Not done: sound, carved rack art, dice as separate models
+
+## Run it
+Open `shop/index.html` in Chrome, Edge or Firefox (needs internet for three.js from a CDN).
