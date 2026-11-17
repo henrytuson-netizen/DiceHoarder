@@ -7,17 +7,15 @@ export const BACK_ROOM = { x: 11.5, z: 10.7, w: 11, d: 5 };
 export const DIVIDER_Z = 8.2;
 export const DOOR = { x: 9.8, w: 1.2, z: DIVIDER_Z };
 
-export interface ShelfSpec { x: number; z: number; letter: string }
-/** 5 island shelves x 66 slots = 330 (see CLAUDE.md). */
-export const SHELVES: ShelfSpec[] = [
-  { x: 3.0, z: 2.0, letter: 'P' },   // Shelf 3
-  { x: 8.6, z: 2.0, letter: 'S' },   // Shelf 4
-  { x: 14.2, z: 2.0, letter: 'C' },  // Shelf 5
-  { x: 3.0, z: 5.9, letter: 'M' },   // Shelf 2
-  { x: 7.2, z: 5.9, letter: 'G' },   // Shelf 1
+/** Rounded display tables (15 slots each), placed in side-by-side pairs. 22 tables x 15 = 330 slots. */
+export const TABLE = { length: 1.25, depth: 0.85, slots: 15 };
+export const TABLE_PAIRS: { x: number; z: number }[] = [
+  { x: 2.2, z: 1.5 }, { x: 5.9, z: 1.5 }, { x: 9.6, z: 1.5 }, { x: 13.3, z: 1.5 },   // row A
+  { x: 2.2, z: 3.9 }, { x: 5.9, z: 3.9 }, { x: 9.6, z: 3.9 }, { x: 13.3, z: 3.9 },   // row B
+  { x: 2.2, z: 6.4 }, { x: 5.9, z: 6.4 }, { x: 9.6, z: 6.4 },                        // row C
 ];
-/** Island footprint half-sizes (x along the long side, z across). */
-export const ISLAND_HALF = { x: 1.45, z: 1.07 };
+/** Centre of every single table, in slot order. */
+export const TABLES: { x: number; z: number }[] = TABLE_PAIRS.flatMap((p) => [{ x: p.x - TABLE.length / 2, z: p.z }, { x: p.x + TABLE.length / 2, z: p.z }]);
 
 /** Wall racks in the back room: model name, position of the back-centre, rotation (front faces local +z). */
 export interface WallRackSpec { model: 'WallRack11' | 'WallRack7'; x: number; z: number; ry: number }
@@ -37,7 +35,7 @@ export const BASEMENT = { x: 9.4, z: 10.9, size: 2.2 };
 
 /** Areas the player cannot enter (shelves, counter, return, desk). */
 export const BLOCKERS: Rect[] = [
-  ...SHELVES.map((s): Rect => [s.x - ISLAND_HALF.x, s.x + ISLAND_HALF.x, s.z - ISLAND_HALF.z, s.z + ISLAND_HALF.z]),
+  ...TABLE_PAIRS.map((p): Rect => [p.x - TABLE.length - 0.02, p.x + TABLE.length + 0.02, p.z - TABLE.depth / 2 - 0.02, p.z + TABLE.depth / 2 + 0.02]),
   [6.0, 6.9, 8.35, 12.85],   // west wall rack
   [6.85, 9.75, 12.3, 13.2],  // south wall rack
   [10.9, 16.9, 5.29, 6.21],
@@ -46,4 +44,4 @@ export const BLOCKERS: Rect[] = [
 ];
 export const BOUNDS = { minX: 0.35, maxX: 16.65, minZ: 0.35, maxZ: 12.85 };
 export const PLAYER = { eye: 1.68, radius: 0.3, walk: 2.6, run: 4.6 };
-export const START = { x: 1.5, z: 3.95, lookX: 9.5, lookY: 0.95, lookZ: 3.5 };
+export const START = { x: 0.6, z: 2.7, lookX: 9, lookY: 0.9, lookZ: 2.9 };

@@ -238,10 +238,10 @@ def wood_mat(name,c1,c2,scale=5):
 def lin(h):
     c=[int(h[i:i+2],16)/255 for i in (1,3,5)]
     return [x/12.92 if x<=.04045 else ((x+.055)/1.055)**2.4 for x in c]
-BASE=lin('#3F2000')
-wood=wood_mat('wood',tuple(x*.7 for x in BASE),tuple(x*1.35 for x in BASE))
-woodd=wood_mat('woodd',tuple(x*.5 for x in BASE),tuple(x*.95 for x in BASE))
-floor=wood_mat('floor',tuple(x*.9 for x in BASE),tuple(x*1.8 for x in BASE))
+BASE=lin('#B06A2C')
+wood=wood_mat('wood',tuple(x*.62 for x in BASE),tuple(x*1.25 for x in BASE))
+woodd=wood_mat('woodd',tuple(x*.45 for x in BASE),tuple(x*.9 for x in BASE))
+floor=wood_mat('floor',tuple(x*.35 for x in BASE),tuple(x*.75 for x in BASE))
 pink=mat_principled('pinkmetal',(.95,.5,.65),.36,1.0); gold=mat_principled('goldmetal',(1.0,.72,.22),.38,1.0)
 clear=mat_principled('clearblue',(.55,.8,1.0),.04,0.0,1.0)
 _nt=clear.node_tree; _va=_nt.nodes.new('ShaderNodeVolumeAbsorption'); _va.inputs['Color'].default_value=(.15,.5,1.0,1); _va.inputs['Density'].default_value=24
@@ -278,46 +278,36 @@ SLOTS=[]
 def slot(par,loc,rot,ex,ey):
     e=empty('slot_%03d'%len(SLOTS),loc,par,rot); e['ex']=ex; e['ey']=ey; SLOTS.append(e); return e
 
-H0,DH,TD,NT,TILT=.6,.24,.2,5,.08   # first tier height, tier step, tier depth, tiers, tray tilt
-def build_island(root):
-    LW,NC=2.0,5
-    top=H0+(NT-1)*DH; spine_h=top+.34
-    for sign in(-1,1):                       # S side (-y) and N side (+y)
-        rx=-sign*TILT
-        for i in range(NT):
-            yc=sign*(.05+(NT-i-.5)*TD); h=H0+i*DH; yo=yc+sign*TD/2
-            pb(root,'slab',(LW,TD,.04),(0,yc,h),wood,rot=(rx,0,0))
-            pb(root,'lip',(LW,.025,.075),(0,yo,h+.03),wood)
-            lo=0 if i==0 else h-DH
-            planks(root,'riser',(LW,.025,h-lo),(0,yo+sign*.0125,(h+lo)/2-.01),woodd,2,wmin=.12,wmax=.2)
-            for k in range(1,NC): pb(root,'div',(.022,TD,.085),(-LW/2+k*LW/NC,yc,h+.04),wood,rot=(rx,0,0))
-            for c in range(NC): slot(root,(-LW/2+(c+.5)*LW/NC,yc,h+.025),(rx,0,0),LW/NC,TD)
-    planks(root,'spine',(LW,.1,spine_h),(0,0,spine_h/2),woodd,2,wmin=.14,wmax=.24)
-    pb(root,'cap',(LW+.08,.18,.045),(0,0,spine_h+.022),wood,bw=.006)
-    # stepped side panels closing both long sides
-    pts=[(-1.05,0)]
-    for i in range(NT):
-        yo=-(.05+(NT-i)*TD); z=H0+i*DH+.1; pts+=[(yo,z),(yo+TD,z)]
-    pts+=[(-.05,spine_h),(.05,spine_h)]
-    for i in reversed(range(NT)):
-        yo=(.05+(NT-i)*TD); z=H0+i*DH+.1; pts+=[(yo-TD,z),(yo,z)]
-    pts+=[(1.05,0)]
-    for sx in(-1,1): profile_panel(root,'sidepanel',pts,'yz',sx*(LW/2+.03)-(.03 if sx>0 else 0)+(0 if sx>0 else 0),.03,woodd)
-    # short ends: 2 tiers x 4 columns
-    EW,EC=2.1,4
+H0,DH,TD,NT,TILT=.6,.24,.2,5,.08   # (wall racks still use these)
+TL,TDP,TH0,TRISE,TNC,TNR=1.25,.85,.8,.13,5,3   # table length, depth, edge height, arch rise, columns, rows
+def arch_z(x): return TH0+TRISE*math.cos(math.pi*x/TL)
+def arch_ang(x): return math.atan(-TRISE*math.pi/TL*math.sin(math.pi*x/TL))
+def bridge(span,top,low,high,n=18):
+    pts=[(-span/2,low)]+[(-span/2+span*k/n, low+(high-low)*math.sin(math.pi*k/n)) for k in range(1,n)]+[(span/2,low),(span/2,top),(-span/2,top)]
+    return pts
+def build_table(root):
+    L,D=TL,TDP; inner=D-.06; cw=L/TNC; rd=inner/TNR
     for sx in(-1,1):
-        ry=sx*TILT
-        for j in range(2):
-            xc=sx*(LW/2+.03+(2-j-.5)*TD); h=H0+j*DH; xo=xc+sx*TD/2
-            pb(root,'eslab',(TD,EW,.04),(xc,0,h),wood,rot=(0,ry,0))
-            pb(root,'elip',(.025,EW,.075),(xo,0,h+.03),wood)
-            lo=0 if j==0 else h-DH
-            planks(root,'eriser',(.025,EW,h-lo),(xo+sx*.0125,0,(h+lo)/2-.01),woodd,2,wmin=.12,wmax=.2)
-            for k in range(1,EC): pb(root,'ediv',(TD,.022,.085),(xc,-EW/2+k*EW/EC,h+.04),wood,rot=(0,ry,0))
-            for c in range(EC): slot(root,(xc,-EW/2+(c+.5)*EW/EC,h+.025),(0,ry,0),TD,EW/EC)
-        x0=LW/2+.03; e_pts=[(x0,0),(x0+2*TD,0),(x0+2*TD,H0+.1),(x0+TD,H0+.1),(x0+TD,H0+DH+.1),(x0,H0+DH+.1)]
-        if sx<0: e_pts=[(-a,b2) for a,b2 in e_pts][::-1]
-        for sy in(-1,1): profile_panel(root,'endpanel',e_pts,'xz',sy*(EW/2)+(0 if sy>0 else -.03),.03,woodd)
+        for sy in(-1,1):
+            pb(root,'leg',(.11,.11,TH0-.02),(sx*(L/2-.06),sy*(D/2-.06),(TH0-.02)/2),woodd,bw=.015)
+            pb(root,'foot',(.15,.15,.04),(sx*(L/2-.06),sy*(D/2-.06),.02),woodd,bw=.012)
+    for c in range(TNC):
+        xc=-L/2+(c+.5)*cw; z=arch_z(xc); ang=arch_ang(xc)
+        pb(root,'cellfloor',(cw+.004,inner,.03),(xc,0,z),wood,rot=(0,-ang,0),bw=.003)
+        for r in range(TNR):
+            yc=-inner/2+(r+.5)*rd
+            slot(root,(xc,yc,z+.016),(0,-ang,0),cw-.03,rd-.03)
+    N=20
+    for i in range(TNR+1):
+        y=-inner/2+i*rd; h=.06 if 0<i<TNR else .095
+        top=[(-L/2+L*k/N, arch_z(-L/2+L*k/N)+h) for k in range(N+1)]
+        bot=[(-L/2+L*k/N, arch_z(-L/2+L*k/N)-.04) for k in range(N,-1,-1)]
+        profile_panel(root,'rib',top+bot,'xz',y-.0125,.025,wood)
+    for c in range(1,TNC):
+        x=-L/2+c*cw; pb(root,'cdiv',(.022,inner,.055),(x,0,arch_z(x)+.027),wood,rot=(0,-arch_ang(x),0),bw=.003)
+    for sx in(-1,1): pb(root,'endcap',(.03,D+.01,.13),(sx*(L/2+.015),0,TH0+.03),wood,bw=.008)
+    for sy in(-1,1): profile_panel(root,'skirt',bridge(L-.2,TH0-.03,.24,.56),'xz',sy*(D/2-.075)-.0125,.025,woodd)
+    for sx in(-1,1): profile_panel(root,'skirt',[(a,b2) for a,b2 in bridge(D-.2,TH0-.03,.24,.52)],'yz',sx*(L/2-.075)-.0125,.025,woodd)
 def build_wallrack(root,ncols):
     W=ncols*.4; NTW=4; H0W=.72
     planks(root,'back',(W+.06,.025,1.9),(0,-.0125,.95),woodd,2,wmin=.14,wmax=.24)
@@ -348,13 +338,15 @@ def build_desk(root):
     planks(root,'top',(3.3,1.3,.06),(0,0,.93),wood,1,wmin=.14,wmax=.22,bw=.008)
     for i in range(3): pb(root,'drawer',(.9,.03,.6),(-1.0+i*1.0,-.61,.5),wood,bw=.01)
 
-isl=empty('Island',(0,0,0)); build_island(isl)
+tb=empty('Table',(0,0,0)); build_table(tb)
 n_island=len(SLOTS)
+tb2=empty('TablePreview',(TL,0,0)); build_table(tb2); tb2['preview']=1
 w7=empty('WallRack7',(4.3,.4,0)); build_wallrack(w7,7)
 w11=empty('WallRack11',(-5.8,.4,0)); build_wallrack(w11,11)
 ct=empty('Counter',(0,-6.5,0)); build_counter(ct)
 dk=empty('Desk',(7.5,-6.5,0)); build_desk(dk)
-print('slots: island',n_island,'x5 =',n_island*5,'| wall',len(SLOTS)-n_island,'| total',n_island*5+len(SLOTS)-n_island)
+n_wall=len(SLOTS)-2*n_island
+print('slots: table',n_island,'x22 =',n_island*22,'| wall',n_wall,'| total',n_island*22+n_wall)
 bpy.context.view_layer.update()
 
 # preview dice in a few island slots (not exported)
@@ -370,12 +362,12 @@ def place_set_at(e,body,ink):
         Rm=n.rotation_difference(Vector((0,0,-1))).to_matrix().to_4x4(); dist=c.dot(n)
         d.matrix_world=T@Matrix.Translation((px,py,dist*s_+.002))@Matrix.Rotation(random.uniform(0,6.283),4,'Z')@Rm@Matrix.Diagonal((s_,s_,s_,1))
 mats=[(pink,inkD),(gold,inkD),(clear,inkL),(teal,inkL),(ruby,inkL)]
-for k,e in enumerate(SLOTS[:n_island]):
-    if e.location.y<0 and random.random()<.45: place_set_at(e,*mats[k%len(mats)])
+for k,e in enumerate(SLOTS[:2*n_island]):
+    if random.random()<.55: place_set_at(e,*mats[k%len(mats)])
 
 fl=box('floor',(30,20,.05),(0,-3,-.025),floor,bw=0)
 cam=bpy.data.objects.new('cam',bpy.data.cameras.new('cam')); link(cam); sc.camera=cam
-tgt=Vector((0,0,.9))
+tgt=Vector((.62,0,.8))
 def area(name,loc,e,col,size):
     l=bpy.data.lights.new(name,'AREA'); l.energy=e; l.color=col; l.size=size; o=bpy.data.objects.new(name,l); link(o); o.location=loc
     dd=tgt-Vector(loc); o.rotation_euler=dd.to_track_quat('-Z','Y').to_euler()
@@ -385,7 +377,7 @@ import os
 OUT=os.path.dirname(os.path.abspath(__file__))
 sc.render.engine='CYCLES'; sc.cycles.device='CPU'
 ONLY=os.environ.get('ONLY')
-VIEWS=[('island.png',36,(2.7,-3.9,2.75),(0,-.25,.85)),('wallrack.png',36,(4.9,-2.6,2.1),(4.3,-.1,1.0)),('counter.png',32,(1.5,-11.8,3.4),(1.0,-6.5,.6))]
+VIEWS=[('table.png',34,(2.1,-2.6,2.3),(.62,0,.75)),('wallrack.png',36,(4.9,-2.6,2.1),(4.3,-.1,1.0)),('counter.png',32,(1.5,-11.8,3.4),(1.0,-6.5,.6))]
 def render_views(prefix=''):
     sc.cycles.samples=int(os.environ.get('SAMPLES','28')); sc.cycles.use_denoising=True
     sc.render.resolution_x=1400; sc.render.resolution_y=800; sc.render.image_settings.file_format='PNG'

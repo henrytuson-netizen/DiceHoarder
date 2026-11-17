@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { SHELVES, WALL_RACKS, WALL_H, DOOR, DIVIDER_Z, COUNTER, DESK, CARPET, BASEMENT, DIE_RADIUS } from './config';
+import { TABLES, TABLE_PAIRS, WALL_RACKS, WALL_H, DOOR, DIVIDER_Z, COUNTER, DESK, CARPET, BASEMENT, DIE_RADIUS } from './config';
 import { Furniture, collectSlots, type Slot } from './furniture';
-import { floorTexture, woodTexture, wallTexture, plaqueTexture, carpetTexture, basementTexture } from './textures';
+import { floorTexture, woodTexture, wallTexture, carpetTexture, basementTexture } from './textures';
 import { SET_KINDS } from './dice';
 import { restingMatrix, type Die } from './diceField';
 import type { DiceSet, MaterialKind } from './sets';
@@ -16,8 +16,8 @@ const ISLAND_MATERIAL: MaterialKind[] = ['plastic', 'solidResin', 'clearResin', 
 export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSet[], rng: Rng, opts: ShopOptions): Shop {
   const mat = (o: THREE.MeshStandardMaterialParameters) => new THREE.MeshStandardMaterial(o);
   const woodTex = woodTexture(rng);
-  const trim = mat({ map: woodTex, color: '#7a4a22', roughness: 0.6 });
-  const trimDark = mat({ map: woodTex, color: '#563112', roughness: 0.65 });
+  const trim = mat({ map: woodTex, color: '#c98a4e', roughness: 0.6 });
+  const trimDark = mat({ map: woodTex, color: '#9a6434', roughness: 0.65 });
 
   function box(w: number, h: number, d: number, m: THREE.Material | THREE.Material[], x: number, y: number, z: number, parent: THREE.Object3D = scene): THREE.Mesh {
     const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
@@ -67,7 +67,7 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
 
   // ---- ceiling + beams
   if (!opts.cutaway) {
-    const ceil = mat({ color: '#3a2210', roughness: 0.85 });
+    const ceil = mat({ color: '#6e4426', roughness: 0.85 });
     box(17, 0.1, 8.2, ceil, 8.5, WALL_H, 4.1); box(11, 0.1, 5, ceil, 11.5, WALL_H, 10.7);
     for (let x = 1.5; x < 17; x += 2.8) box(0.22, 0.28, 8.2, trim, x, WALL_H - 0.2, 4.1);
     for (let x = 7; x < 17; x += 2.8) box(0.22, 0.28, 5, trim, x, WALL_H - 0.2, 10.7);
@@ -75,15 +75,9 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
 
   // ---- islands, wall racks, slots
   const slots: Slot[] = [];
-  const plaqueFrame = mat({ color: '#3a2210', roughness: 0.6 });
-  SHELVES.forEach((s) => {
-    const isl = furniture.clone('Island'); isl.position.set(s.x, 0, s.z); scene.add(isl);
-    slots.push(...collectSlots(isl, slots.length));
-    const face = mat({ map: plaqueTexture(s.letter), roughness: 0.5 });
-    [1, -1].forEach((dir) => {
-      const p = box(0.3, 0.22, 0.03, [plaqueFrame, plaqueFrame, plaqueFrame, plaqueFrame, face, plaqueFrame], s.x, 1.72, s.z + dir * 0.065);
-      p.rotation.y = dir > 0 ? 0 : Math.PI;
-    });
+  TABLES.forEach((t) => {
+    const tb = furniture.clone('Table'); tb.position.set(t.x, 0, t.z); scene.add(tb);
+    slots.push(...collectSlots(tb, slots.length));
   });
   const islandSlotCount = slots.length;
   WALL_RACKS.forEach((w) => {
@@ -126,7 +120,8 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
     shade.position.set(x, 2.7, z); shade.userData.noCollide = true; scene.add(shade);
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5), mat({ color: '#111' })); cord.position.set(x, 3.0, z); cord.userData.noCollide = true; scene.add(cord);
   };
-  SHELVES.forEach((s) => pendant(s.x, s.z, opts.cutaway ? 18 : 14));
+  [[4.05, 1.5], [11.45, 1.5], [4.05, 3.9], [11.45, 3.9], [4.05, 6.4], [9.6, 6.4]].forEach(([x, z]) => pendant(x, z, opts.cutaway ? 18 : 14));
+  void TABLE_PAIRS;
   pendant(14.4, 10.8, 16); pendant(8.4, 10.8, 14); pendant(COUNTER.x, 5.0, 10);
   const sun = new THREE.DirectionalLight('#ffe0b0', opts.cutaway ? 2.2 : 0.8);
   sun.position.set(opts.cutaway ? 3 : -4, opts.cutaway ? 14 : 6, opts.cutaway ? 14 : 8); sun.target.position.set(8.5, 0, 6);

@@ -1,6 +1,5 @@
 import type { DiceSet } from './sets';
 import { MATERIAL_LABEL } from './sets';
-import { SHELVES } from './config';
 
 /** The shop PC: a map of all 402 slots, opened from the computer in the back room. */
 export class ShopComputer {
@@ -29,9 +28,9 @@ export class ShopComputer {
       return `<div class="cell ${cls}" style="--c:${set.base.hex};--i:${set.ink.hex}" title="${set.name} — ${n}/7"></div>`;
     };
     const groups: string[] = [];
-    SHELVES.forEach((s, k) => {
+    (['plastic', 'solidResin', 'clearResin', 'metal', 'gemstone'] as const).forEach((m, k) => {
       const cells = Array.from({ length: 66 }, (_, i) => cell(k * 66 + i)).join('');
-      groups.push(`<section><h3>Island ${s.letter} · ${MATERIAL_LABEL[(['plastic', 'solidResin', 'clearResin', 'metal', 'gemstone'] as const)[k]]}</h3><div class="grid">${cells}</div></section>`);
+      groups.push(`<section><h3>Tables · ${MATERIAL_LABEL[m]}</h3><div class="grid">${cells}</div></section>`);
     });
     groups.push(`<section><h3>Wall racks · Special + extras</h3><div class="grid">${Array.from({ length: 72 }, (_, i) => cell(330 + i)).join('')}</div></section>`);
     this.root.innerHTML = `<div class="pc-screen">

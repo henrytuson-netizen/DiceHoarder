@@ -54,7 +54,7 @@ export function woodTexture(rng: Rng): THREE.CanvasTexture {
 
 export function wallTexture(rng: Rng, w: number, h: number): THREE.CanvasTexture {
   return canvasTexture((g, cw, ch) => {
-    g.fillStyle = '#3f7a68';
+    g.fillStyle = '#5d7d76';
     g.fillRect(0, 0, cw, ch);
     for (let i = 0; i < 16; i++) {
       g.fillStyle = `rgba(${rng() > 0.5 ? '255,255,255' : '0,0,0'},${0.03 + rng() * 0.04})`;

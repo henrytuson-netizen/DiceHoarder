@@ -5,12 +5,12 @@
 ## Locked decisions
 - Scale: 1 px of the floor-plan drawing = 1 cm. Main room 17 x 8.2 m, back room 11 x 5 m, door at x=9.8 in the dividing wall.
 - **402 unique sets, 2,814 dice, one slot per set (402 slots).** A unique set = material + base colour + ink colour. A set is the standard 7 (d4 d6 d8 d10 d% d12 d20); a few *secret* sets may break the rules and get their own display, outside the 402.
-- Slots: 5 island shelves x 66 = 330, plus wall racks x 72 = 402.
-  - Island (same footprint as before, ~2.8 x 2.1 m): each long side 5 stepped tiers x 5 columns (0.4 x 0.2 m slots), each short end 2 tiers x 4 columns. Tiers at 0.60 / 0.84 / 1.08 / 1.32 / 1.56 m.
+- Slots: 22 rounded display tables x 15 = 330, plus wall racks x 72 = 402.
+  - Table: 1.25 x 0.85 m, arched top (0.80 m at the ends, 0.93 m in the middle), 5 x 3 slot grid, legs with arched skirts. Placed in 11 side-by-side pairs: rows at z 1.5 / 3.9 / 6.4 (see `TABLE_PAIRS` in `src/config.ts`).
   - Wall racks: 4 tiers x 18 columns (0.4 m each) on the back room's west wall (11 columns) and south wall (7 columns). Tiers at 0.72-1.44 m.
   - **Everything reachable standing** (no ladders). Slot positions are exported as `slot_###` empties in the model, with width/depth in `extras`.
 - Layout: shelves 3, 4, 5 across the back; 1 and 2 below; counter (6 m) with return on the right; carpet, basement hatch ("coming soon"), desk with computer, plant in the back room.
-- Wood: dark ebony based on `#3F2000`, matte oiled finish. Furniture is built from separate boards of random width; every board gets its own tone, ring scale, grain bend and occasional knots so nothing repeats. Baked to one atlas.
+- Wood: **warm honey** based on `#B06A2C` (user choice, replaces the earlier ebony), matte oiled finish. Furniture is built from separate boards of random width; every board gets its own tone, ring scale, grain bend and occasional knots so nothing repeats. Baked to one atlas.
 - Dice are drawn smaller than real life but small enough that 7 fit a 0.4 x 0.2 m slot (radius ~0.03 m). 2,814 dice need instanced rendering and numerals only near the player.
 
 ## Rules (from the Steam text; details marked ? are unconfirmed)
@@ -20,7 +20,7 @@
 - Story mode (daily required value ?) and Chill mode. Basement unlocks when all slots are done.
 
 ## Target look (for later)
-Warm, saturated cozy shop: teal-grey plaster walls, wooden posts and beams, tall bright windows with green curtains, ivy and hanging plants, lamps and candles, low rounded display tables with arched slot grids in clusters, heaps and drifts of dice. Open questions: warm honey wood vs. the dark `#3F2000` ebony; rounded tables vs. the tall stepped islands (would change the 402-slot layout). Make it in this style with our own models, never copies.
+Warm, saturated cozy shop: teal-grey plaster walls, wooden posts and beams, tall bright windows with green curtains, ivy and hanging plants, lamps and candles, low rounded display tables with arched slot grids in clusters, heaps and drifts of dice. Decided: warm honey wood and rounded arched tables. Match this look as closely as possible with our own models and art (never their assets).
 
 ## Workflow
 - The single-file HTML pages are prototypes. The real game moves to a proper project (bundler, three.js dependency).
