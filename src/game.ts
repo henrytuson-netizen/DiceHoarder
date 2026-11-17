@@ -21,7 +21,7 @@ export interface GameDeps {
   slots: Slot[]; slotOfSet: number[]; computer: THREE.Object3D; presorted: Set<number>;
 }
 
-/** Core loop: pick up dice (one set, up to 7), sort them into their slot, throw the rest. */
+/** Core loop: pick up any dice (up to 7), sort the ones that belong into each slot, throw the rest. */
 export class Game {
   readonly hand: number[] = [];
   sel = 0;
@@ -90,11 +90,11 @@ export class Game {
     if (this.pc.isOpen) { this.pc.close(); return; }
     if (this.hoverComputer) { this.pc.open(this.mask); return; }
     if (this.hoverSlot !== undefined && this.hand.length) {
-      const setId = d.dice[this.hand[0]].setId;
-      if (d.slotOfSet[setId] !== this.hoverSlot) { toast(`That slot is for ${this.setName(this.hoverSlot)}`); return; }
-      const n = this.hand.length;
-      for (const id of this.hand) this.toSlot(id);
-      this.hand.length = 0; this.sel = 0;
+      const fits = this.fitting(this.hoverSlot);
+      if (!fits.length) { toast(`None of your dice go here · this slot is for ${this.setName(this.hoverSlot)}`); return; }
+      const setId = d.dice[fits[0]].setId, n = fits.length;
+      for (const id of fits) { this.toSlot(id); this.hand.splice(this.hand.indexOf(id), 1); }
+      this.sel = Math.max(0, Math.min(this.sel, this.hand.length - 1));
       d.field.flush(); clack(0.7, 0.9);
       if (this.mask[setId] === FULL) { chime(); toast(`Set complete: ${d.sets[setId].name} (${this.sortedSets} / ${d.sets.length})`); }
       else toast(`Sorted ${n} ${n === 1 ? 'die' : 'dice'} · ${this.count(this.mask[setId])} / 7 in this slot`);
@@ -175,7 +175,7 @@ export class Game {
     // glow the slot under the crosshair while holding dice
     if (this.hoverSlot !== undefined && this.hand.length) {
       const s = d.slots[this.hoverSlot];
-      const ok = d.slotOfSet[d.dice[this.hand[0]].setId] === this.hoverSlot;
+      const ok = this.fitting(this.hoverSlot).length > 0;
       (this.slotGlow.material as THREE.MeshBasicMaterial).color.set(ok ? '#8ee033' : '#e0483a');
       this.slotGlow.matrix.copy(s.matrix).multiply(new THREE.Matrix4().makeTranslation(0, 0.008, 0))
         .multiply(new THREE.Matrix4().makeScale(s.width * 0.95, 1, s.depth * 0.9)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
@@ -184,8 +184,8 @@ export class Game {
     // prompt text
     if (this.hoverComputer) prompt('[E] Use the shop computer');
     else if (this.hoverSlot !== undefined && this.hand.length) {
-      const ok = d.slotOfSet[d.dice[this.hand[0]].setId] === this.hoverSlot;
-      prompt(ok ? `[E] Sort ${this.hand.length} ${this.hand.length === 1 ? 'die' : 'dice'} here` : `Wrong slot · for ${this.setName(this.hoverSlot)}`, ok ? 'ok' : 'bad');
+      const n = this.fitting(this.hoverSlot).length;
+      prompt(n ? `[E] Sort ${n} ${n === 1 ? 'die' : 'dice'} here` : `None of your dice go here · for ${this.setName(this.hoverSlot)}`, n ? 'ok' : 'bad');
     } else if (this.hoverSlot !== undefined) {
       const setId = this.setOfSlot(this.hoverSlot);
       prompt(`${d.sets[setId].name} · ${this.count(this.mask[setId])} / 7`);
@@ -205,10 +205,11 @@ export class Game {
     this.mask[die.setId] |= 1 << die.kindIndex;
   }
   private cannotPick(die: Die): string | null {
-    if (this.hand.length >= HAND_MAX) return 'hand full (7)';
-    if (this.hand.length && this.d.dice[this.hand[0]].setId !== die.setId) return 'hand holds another set';
-    return null;
+    void die;
+    return this.hand.length >= HAND_MAX ? 'hand full (7)' : null;
   }
+  /** Held dice that belong in this slot. */
+  private fitting(slot: number): number[] { return this.hand.filter((id) => this.d.slotOfSet[this.d.dice[id].setId] === slot); }
   private count(m: number): number { let c = 0; for (let i = 0; i < 7; i++) if (m & (1 << i)) c++; return c; }
   private setOfSlot(slot: number): number { return this.d.slotOfSet.indexOf(slot); }
   private setName(slot: number): string { return this.d.sets[this.setOfSlot(slot)].name; }
