@@ -9,6 +9,8 @@ import { DiceField } from './diceField';
 import { Physics } from './physics';
 import { Player } from './player';
 import { Game } from './game';
+import { Greenery } from './greenery';
+import { LightShafts } from './lightshafts';
 
 const params = new URLSearchParams(location.search);
 const AERIAL = params.get('view') === 'aerial';
@@ -41,6 +43,10 @@ async function main(): Promise<void> {
   const tris = physics.addStatic(scene);
   const field = new DiceField(shop.dice, sets, (d) => d.floor);
   scene.add(field.group);
+  const greenery = await Greenery.create(rng, `${import.meta.env.BASE_URL}models/plants.glb`);
+  scene.add(greenery.group);
+  const shafts = new LightShafts(rng);
+  scene.add(shafts.group);
 
   const player = new Player(camera, renderer.domElement);
   const game = new Game({ scene, camera, dom: renderer.domElement, field, physics, dice: shop.dice, sets, slots: shop.slots, slotOfSet: shop.slotOfSet, computer: shop.computer, presorted: shop.presorted });
@@ -54,12 +60,13 @@ async function main(): Promise<void> {
   // hooks for headless checks
   (window as unknown as Record<string, unknown>).__game = { camera, player, game, physics, dice: shop.dice, sets, slots: shop.slots, slotOfSet: shop.slotOfSet, staticTris: tris, render: () => renderer.render(scene, camera) };
 
-  if (TEST) { game.update(0); renderer.render(scene, camera); (window as unknown as { __done: boolean }).__done = true; return; }
+  if (TEST) { game.update(0); greenery.update(1.5); shafts.update(1.5); renderer.render(scene, camera); (window as unknown as { __done: boolean }).__done = true; return; }
   let last = performance.now();
   renderer.setAnimationLoop((t) => {
     const dt = Math.min(0.05, (t - last) / 1000); last = t;
     if (!AERIAL && !game.paused) player.step(dt);
     game.update(dt);
+    greenery.update(t / 1000); shafts.update(t / 1000);
     renderer.render(scene, camera);
   });
   (window as unknown as { __done: boolean }).__done = true;

@@ -33,6 +33,17 @@ export const DESK = { x: 14.8, z: 12.5 };
 export const CARPET = { x: 14.4, z: 10.1, w: 4.0, d: 2.6 };
 export const BASEMENT = { x: 9.4, z: 10.9, size: 2.2 };
 
+/** Potted floor plants (model name, position). Kept out of walkways. */
+export const POTS: { model: 'potted_plant_01' | 'potted_plant_02'; x: number; z: number; ry: number }[] = [
+  { model: 'potted_plant_01', x: 0.55, z: 0.55, ry: 0.4 },
+  { model: 'potted_plant_01', x: 16.45, z: 0.6, ry: 2.1 },
+  { model: 'potted_plant_02', x: 0.55, z: 7.65, ry: 1.2 },
+  { model: 'potted_plant_02', x: 16.4, z: 4.55, ry: 3.0 },
+  { model: 'potted_plant_01', x: 16.4, z: 8.85, ry: 0.9 },
+  { model: 'potted_plant_02', x: 10.75, z: 12.65, ry: 2.4 },
+  { model: 'potted_plant_02', x: 5.4, z: 7.7, ry: 0.2 },
+];
+
 /** Areas the player cannot enter (shelves, counter, return, desk). */
 export const BLOCKERS: Rect[] = [
   ...TABLE_PAIRS.map((p): Rect => [p.x - TABLE.length - 0.02, p.x + TABLE.length + 0.02, p.z - TABLE.depth / 2 - 0.02, p.z + TABLE.depth / 2 + 0.02]),
@@ -41,6 +52,7 @@ export const BLOCKERS: Rect[] = [
   [10.9, 16.9, 5.29, 6.21],
   [10.9, 11.9, 6.2, 7.6],
   [13.2, 16.4, 11.9, 13.1],
+  ...POTS.map((p): Rect => [p.x - 0.32, p.x + 0.32, p.z - 0.32, p.z + 0.32]),
 ];
 export const BOUNDS = { minX: 0.35, maxX: 16.65, minZ: 0.35, maxZ: 12.85 };
 export const PLAYER = { eye: 1.68, radius: 0.3, walk: 2.6, run: 4.6 };

@@ -99,18 +99,6 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
   box(CARPET.w, 0.03, CARPET.d, mat({ map: carpetTexture(), roughness: 0.95 }), CARPET.x, 0.015, CARPET.z);
   box(BASEMENT.size, 0.06, BASEMENT.size, mat({ map: basementTexture(), roughness: 0.7 }), BASEMENT.x, 0.03, BASEMENT.z);
   box(BASEMENT.size + 0.14, 0.04, BASEMENT.size + 0.14, trimDark, BASEMENT.x, 0.02, BASEMENT.z);
-  {
-    const px = DESK.x - 1.2, pz = DESK.z;
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.3, 20), mat({ color: '#b86b3a', roughness: 0.7 }));
-    pot.position.set(px, 1.11, pz); pot.castShadow = true; scene.add(pot);
-    const leaves = new THREE.Group(); leaves.userData.noCollide = true; scene.add(leaves);
-    for (let i = 0; i < 16; i++) {
-      const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), mat({ color: rng() > 0.5 ? '#3f9a52' : '#2f7a3f', roughness: 0.7 }));
-      l.scale.set(1, 1.8, 0.4); l.position.set(px + (rng() - 0.5) * 0.35, 1.5 + rng() * 0.35, pz + (rng() - 0.5) * 0.35);
-      l.rotation.set(rng() * 0.8, rng() * 6, rng() * 0.8); leaves.add(l);
-    }
-  }
-
   // ---- lights
   scene.add(new THREE.HemisphereLight('#ffc98a', '#4a2a14', opts.cutaway ? 0.95 : 0.8));
   const pendant = (x: number, z: number, intensity: number) => {
