@@ -8,7 +8,7 @@ export const DIVIDER_Z = 8.2;
 export const DOOR = { x: 9.8, w: 1.2, z: DIVIDER_Z };
 
 export interface ShelfSpec { x: number; z: number; letter: string }
-/** 5 shelves x 4 sides x 3 slots = 60 slots. */
+/** 5 island shelves x 66 slots = 330 (see CLAUDE.md). */
 export const SHELVES: ShelfSpec[] = [
   { x: 3.0, z: 2.0, letter: 'P' },   // Shelf 3
   { x: 8.6, z: 2.0, letter: 'S' },   // Shelf 4
@@ -16,7 +16,19 @@ export const SHELVES: ShelfSpec[] = [
   { x: 3.0, z: 5.9, letter: 'M' },   // Shelf 2
   { x: 7.2, z: 5.9, letter: 'G' },   // Shelf 1
 ];
-export const SHELF = { coreW: 2.0, coreD: 1.15, top: 1.35, trayH: 0.95, trayDepth: 0.42, tilt: 0.17 };
+/** Island footprint half-sizes (x along the long side, z across). */
+export const ISLAND_HALF = { x: 1.45, z: 1.07 };
+
+/** Wall racks in the back room: model name, position of the back-centre, rotation (front faces local +z). */
+export interface WallRackSpec { model: 'WallRack11' | 'WallRack7'; x: number; z: number; ry: number }
+export const WALL_RACKS: WallRackSpec[] = [
+  { model: 'WallRack11', x: 6.07, z: 10.6, ry: Math.PI / 2 },  // back-room west wall, faces east
+  { model: 'WallRack7', x: 8.3, z: 13.13, ry: Math.PI },        // back-room south wall, faces north
+];
+
+/** Dice are drawn at this radius (bigger than real dice, small enough that 7 fit a 0.4 x 0.2 m slot). */
+export const DIE_RADIUS = 0.03;
+export const TOTAL_SETS = 402;
 
 export const COUNTER = { x: 13.9, z: 5.75 };
 export const DESK = { x: 14.8, z: 12.5 };
@@ -25,7 +37,9 @@ export const BASEMENT = { x: 9.4, z: 10.9, size: 2.2 };
 
 /** Areas the player cannot enter (shelves, counter, return, desk). */
 export const BLOCKERS: Rect[] = [
-  ...SHELVES.map((s): Rect => [s.x - 1.42, s.x + 1.42, s.z - 1.0, s.z + 1.0]),
+  ...SHELVES.map((s): Rect => [s.x - ISLAND_HALF.x, s.x + ISLAND_HALF.x, s.z - ISLAND_HALF.z, s.z + ISLAND_HALF.z]),
+  [6.0, 6.9, 8.35, 12.85],   // west wall rack
+  [6.85, 9.75, 12.3, 13.2],  // south wall rack
   [10.9, 16.9, 5.29, 6.21],
   [10.9, 11.9, 6.2, 7.6],
   [13.2, 16.4, 11.9, 13.1],
