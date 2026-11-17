@@ -120,7 +120,7 @@ export function buildShop(scene: THREE.Scene, furniture: Furniture, sets: DiceSe
     shade.position.set(x, 2.7, z); shade.userData.noCollide = true; scene.add(shade);
     const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.5), mat({ color: '#111' })); cord.position.set(x, 3.0, z); cord.userData.noCollide = true; scene.add(cord);
   };
-  [[4.05, 1.5], [11.45, 1.5], [4.05, 3.9], [11.45, 3.9], [4.05, 6.4], [9.6, 6.4]].forEach(([x, z]) => pendant(x, z, opts.cutaway ? 18 : 14));
+  [[4.05, 1.5], [11.45, 1.5], [4.05, 3.9], [11.45, 3.9], [3.6, 6.4], [8.7, 6.4]].forEach(([x, z]) => pendant(x, z, opts.cutaway ? 18 : 14));
   void TABLE_PAIRS;
   pendant(14.4, 10.8, 16); pendant(8.4, 10.8, 14); pendant(COUNTER.x, 5.0, 10);
   const sun = new THREE.DirectionalLight('#ffe0b0', opts.cutaway ? 2.2 : 0.8);

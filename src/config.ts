@@ -12,7 +12,7 @@ export const TABLE = { length: 1.25, depth: 0.85, slots: 15 };
 export const TABLE_PAIRS: { x: number; z: number }[] = [
   { x: 2.2, z: 1.5 }, { x: 5.9, z: 1.5 }, { x: 9.6, z: 1.5 }, { x: 13.3, z: 1.5 },   // row A
   { x: 2.2, z: 3.9 }, { x: 5.9, z: 3.9 }, { x: 9.6, z: 3.9 }, { x: 13.3, z: 3.9 },   // row B
-  { x: 2.2, z: 6.4 }, { x: 5.9, z: 6.4 }, { x: 9.6, z: 6.4 },                        // row C
+  { x: 1.9, z: 6.4 }, { x: 5.3, z: 6.4 }, { x: 8.7, z: 6.4 },                        // row C (clear of the counter return)
 ];
 /** Centre of every single table, in slot order. */
 export const TABLES: { x: number; z: number }[] = TABLE_PAIRS.flatMap((p) => [{ x: p.x - TABLE.length / 2, z: p.z }, { x: p.x + TABLE.length / 2, z: p.z }]);
