@@ -1,0 +1,9 @@
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+#app, canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#hud { position: fixed; left: 34px; top: 26px; color: #f6ecd9; font-size: 22px; line-height: 1.5; text-shadow: 0 1px 4px rgba(0,0,0,.8); width: 320px; pointer-events: none; }
+#hud b { font-weight: 600; }
+#hud hr { border: 0; border-top: 1px solid rgba(255,255,255,.4); margin: 8px 0; }
+.held { display: inline-block; background: #f6ecd9; color: #3a2410; border-radius: 4px; padding: 0 8px; margin-left: 6px; font-weight: 700; }
+#hud-set { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 8px; }
+#crosshair { position: fixed; left: calc(50% - 8px); top: calc(50% - 8px); width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.9); border-radius: 50%; pointer-events: none; }
+#hint { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); color: #fff; font: 600 16px 'Segoe UI', Arial; text-shadow: 0 1px 4px #000; background: rgba(0,0,0,.35); padding: 8px 14px; border-radius: 8px; pointer-events: none; }
